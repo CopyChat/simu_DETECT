@@ -15,7 +15,7 @@ dir:
 job:
   loading_namelist: 1
   wps:
-    loading_domain: 0
+    loading_domain: 1
     plot_domain: 1
 
 output:
