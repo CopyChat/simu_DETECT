@@ -1,0 +1,30 @@
+# @package _global_
+
+hydra:
+  run:
+    dir: .
+    # Output directory for normal runs
+    # dir: ./outputs/${now:%Y-%m-%d_%H-%M-%S}
+
+# Directories
+dir:
+  working: /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT
+  plot: /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/plot
+  domain: /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/domain
+
+job:
+  wps:
+    loading_domain: 0
+    plot_domain: 1
+
+output:
+  plot_domain: 'domain_setting_simu_detect.png'
+
+simulation:
+  num_dom: 3
+
+
+
+
+
+
