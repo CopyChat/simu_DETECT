@@ -4241,6 +4241,7 @@ def value_lonlatbox_from_area(area: str):
     if area == 'detect':
         box = [40, 70, -32, -10]
 
+
     return box
 
 

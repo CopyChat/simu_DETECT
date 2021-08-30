@@ -32,6 +32,9 @@ def simulation(cfg: DictConfig) -> None:
         fig = GEO_PLOT.plot_wrf_domain(num_dom=3, domain_dir=cfg.dir.domain)
         fig.savefig(f'./plot/domain_wrf_d{cfg.simulation.num_dom:g}.png', dpi=300)
 
+    if cfg.job.loading_namelist:
+        os.system("./src/get_namelist.sh")
+
 
 if __name__ == "__main__":
     sys.exit(simulation())
