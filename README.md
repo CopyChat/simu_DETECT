@@ -4,17 +4,17 @@ simulation for DETECT project
 `Project  description`
 
 
-*this simulation is run @CCuB*
+*this simulation is running @CCuB*
 
 
 ### Simulation forcing data
 
-ERA5 @27km, @3h resolution.
+ERA5 @27km @3h resolution.
 
 
 ### domain setting:
 
-`downscale ratio = 3, 3, 3, 1km @Reunion`
+`downscale ratio = 3, 3, 3. 1km @Reunion`
 
 ### first test run setting:
 
@@ -25,7 +25,7 @@ ERA5 @27km, @3h resolution.
   - DIF (SWDDIF)
   - TEMP (t2m)
 - spatial resolution: @1km
-- temporal resolution: 10 minutes`
+- temporal resolution: 1 minutes
 
 ### physical option:
 
@@ -48,5 +48,11 @@ where 'CONUS' is equivalent to
  - sf_surface_physics = 2.
 
 
+### calculation & CPU:
+ `100 CPUs` --> `2 hours to simulate 1 day`
+
+### output size:
+`1day output` == `100 Mb`
+`3months output` == `540 Mb`
 
 

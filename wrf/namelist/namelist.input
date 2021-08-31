@@ -18,7 +18,7 @@
  interval_seconds                    = 10800,                           ! be the interval between the lateral boundary condition file (in seconds)
  input_from_file                     = T,       T,      T,      T,      ! for real.exe program to create wrfinput_d0
  history_interval                    = 60,      60,      1,     360,    ! history output interval in minutes, can be different for different domains
- frames_per_outfile                  = 24,      24,    144,     120,    ! 120 ~ monthly output file
+ frames_per_outfile                  = 24,      24,   1440,     120,    ! 120 ~ monthly output file
  restart                             = F,                               !
  restart_interval                    = 1440,                             ! in minutes, 1440 ~ 1 day, 
  io_form_history                     = 2,                               ! 2=netCDF
