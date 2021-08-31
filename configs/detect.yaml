@@ -15,8 +15,8 @@ dir:
 job:
   loading_namelist: 1
   wps:
-    loading_domain: 1
-    plot_domain: 1
+    loading_domain: 0
+    plot_domain: 0
 
 output:
   plot_domain: 'domain_setting_simu_detect.png'
