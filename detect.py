@@ -9,9 +9,6 @@ __author__ = "ChaoTANG@univ-reunion.fr"
 import os
 import sys
 import hydra
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 import GEO_PLOT
 
@@ -22,8 +19,10 @@ def simulation(cfg: DictConfig) -> None:
     to produce WRF simulation @Reunion island for DETECT project
     """
 
-    if cfg.job.wps.loading_domain:
+    if cfg.job.loading_namelist:
+        os.system("./src/get_namelist.sh")
 
+    if cfg.job.wps.loading_domain:
         os.system("./src/get_domain_ccub.sh")
         print(f'good')
 
@@ -32,8 +31,7 @@ def simulation(cfg: DictConfig) -> None:
         fig = GEO_PLOT.plot_wrf_domain(num_dom=3, domain_dir=cfg.dir.domain)
         fig.savefig(f'./plot/domain_wrf_d{cfg.simulation.num_dom:g}.png', dpi=300)
 
-    if cfg.job.loading_namelist:
-        os.system("./src/get_namelist.sh")
+    print('good')
 
 
 if __name__ == "__main__":

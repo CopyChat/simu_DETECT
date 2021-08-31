@@ -306,7 +306,7 @@ def plot_wrf_domain(num_dom: int, domain_dir: str):
     import matplotlib.ticker as mticker
     from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
-    fig = plt.figure(figsize=(10, 10), dpi=300)
+    fig = plt.figure(figsize=(10, 8), dpi=300)
     # fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, hspace=1.5, top=0.95, wspace=0.05)
 
     ax = plt.subplot(111, projection=ccrs.PlateCarree())
@@ -4239,8 +4239,7 @@ def value_lonlatbox_from_area(area: str):
         box = [54.8, 58.1, -21.9, -19.5]
 
     if area == 'detect':
-        box = [40, 70, -32, -10]
-
+        box = [44, 64, -28, -12]
 
     return box
 
