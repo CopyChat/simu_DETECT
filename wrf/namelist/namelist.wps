@@ -1,4 +1,4 @@
-! simulation for DETECT
+! simulation for DETECT !
 &share
  wrf_core = 'ARW',
  max_dom = 3,

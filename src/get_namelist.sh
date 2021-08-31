@@ -36,3 +36,6 @@ rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DET
 
 rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/output_d0?.txt \
     /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/output_setup/
+
+rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/job.amd.100 \
+    /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/jobs/

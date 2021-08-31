@@ -18,7 +18,7 @@ ERA5 @27km, @3h resolution.
 
 ### first test run setting:
 
-- simulation period: 2021-06-01 to 2021-08-20
+- simulation period: 2021-05-01 to 2021-08-21T21:00:00
 
 - output: 
   - GHI (SWDOWN)
@@ -30,3 +30,23 @@ ERA5 @27km, @3h resolution.
 ### physical option:
 
 `physics_suite = 'CONUS'`
+
+where 'CONUS' is equivalent to
+
+ - mp_physics         = 8,
+
+ - cu_physics         = 6, (closed for 1 km and 3 km domains)
+
+ - ra_lw_physics      = 4,
+
+ - ra_sw_physics      = 4,
+
+ - bl_pbl_physics     = 2,
+
+ - sf_sfclay_physics  = 2,
+
+ - sf_surface_physics = 2.
+
+
+
+

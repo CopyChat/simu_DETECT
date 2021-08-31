@@ -1,0 +1,9 @@
+#!/bin/ksh 
+#$ -q batch
+#$ -l vendor=amd
+#$ -N WRF42FLAGCCUB_544slots
+#$ -pe dmp* 100
+
+#mpirun -np $NSLOTS real.exe 
+
+mpirun -np $NSLOTS wrf.exe 
