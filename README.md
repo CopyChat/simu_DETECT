@@ -48,11 +48,17 @@ where 'CONUS' is equivalent to
  - sf_surface_physics = 2.
 
 
-### calculation & CPU:
- `100 CPUs` --> `2 hours to simulate 1 day`
+### Calculation & CPU:
+ `100 CPUs` --> `15 minutes to simulate 1 day`, so
 
-### output size:
-`1day output` == `100 Mb`
-`3months output` == `540 Mb`
+ `7.5 hours to simulate 1 month`
+
+
+### Output size:
+`1-day output` == `~ 85 Mb`;
+
+`3-month output` == `~ 8 Gb`
+
+
 
 
