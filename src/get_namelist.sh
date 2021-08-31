@@ -28,8 +28,11 @@ while getopts ":tf:" opt; do
 done
 shift $(($OPTIND - 1))
 #=================================================== p
-scp ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wps/namelist.wps \
+rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wps/namelist.wps \
     /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/namelist/
 
-scp ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/namelist.input \
+rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/namelist.input \
     /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/namelist/
+
+rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/output_d0?.txt \
+    /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/output_setup/
