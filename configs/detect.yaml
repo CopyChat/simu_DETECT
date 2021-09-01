@@ -13,8 +13,8 @@ dir:
   domain: /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/domain
 
 job:
-  loading_namelist: 1
-  loading_output_file: 1
+  loading_model_setup: 1
+  loading_output_for_detect: 1
   wps:
     loading_domain: 0
     plot_domain: 0
