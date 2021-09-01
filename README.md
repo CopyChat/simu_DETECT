@@ -59,6 +59,11 @@ where 'CONUS' is equivalent to
 
 `3-month output` == `~ 8 Gb`
 
+### data manage:
 
+- output for detect project: 
+BigNas
+- all the simulation backup: 
+titan: $HOME/Modeling/DETECT ~ 60Gb.
 
 
