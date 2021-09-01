@@ -19,17 +19,20 @@ def simulation(cfg: DictConfig) -> None:
     to produce WRF simulation @Reunion island for DETECT project
     """
 
-    if cfg.job.loading_namelist:
-        os.system("./src/get_namelist.sh")
+    if cfg.job.loading_model_setup:
+        os.system("./src/get_model_setup.sh")
 
     if cfg.job.wps.loading_domain:
         os.system("./src/get_domain_ccub.sh")
         print(f'good')
 
     if cfg.job.wps.plot_domain:
-
         fig = GEO_PLOT.plot_wrf_domain(num_dom=3, domain_dir=cfg.dir.domain)
         fig.savefig(f'./plot/domain_wrf_d{cfg.simulation.num_dom:g}.png', dpi=300)
+
+    if cfg.job.wps.loading_output_for_detect:
+        os.system("./src/get_output.sh")
+        print(f'good')
 
     print('good')
 
