@@ -39,3 +39,6 @@ rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DET
 
 rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/job.amd.100 \
     /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/jobs/
+
+rsync -aruxHPS ctb19335@ssh-ccub.u-bourgogne.fr:/work/crct/ctb19335/Modeling/DETECT/wrf/rsl.error.0000 \
+    /Users/ctang/Microsoft_OneDrive/OneDrive/CODE/simu_DETECT/wrf/wrf.run.log
