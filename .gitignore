@@ -3,3 +3,4 @@
 /.hydra/
 /.idea/
 /wrf/domain/
+/wrf/output_for_detect/
