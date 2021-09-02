@@ -57,12 +57,12 @@ where 'CONUS' is equivalent to
 ### Output size:
 `1-day output` == `~ 85 Mb`;
 
-`3-month output` == `~ 8 Gb`
+`3-month output` == `< 8 Gb`
 
 ### data manage:
 
 - output for detect project: 
-BigNas
+Le2p-Nas ~ < 8Gb.
 - all the simulation backup: 
 titan: $HOME/Modeling/DETECT ~ 60Gb.
 
