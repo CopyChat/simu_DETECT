@@ -11,6 +11,7 @@ import sys
 from typing import List
 import warnings
 import hydra
+import seaborn
 from omegaconf import DictConfig
 import cftime
 import glob
@@ -5096,3 +5097,4 @@ def plot_cordex_ensemble_changes_map(past: xr.DataArray, mid: xr.DataArray, end:
     plt.savefig(f'./plot/{big_title.replace(" ", "_"):s}.png', dpi=200)
     plt.show()
     print(f'done')
+# change from simu_detect
