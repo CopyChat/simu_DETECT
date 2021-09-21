@@ -811,6 +811,8 @@ def get_data_in_classif(da: xr.DataArray, df: pd.DataFrame, significant: bool = 
             break
         class_1: xr.DataArray = \
             da.where(da.time.dt.strftime('%Y-%m-%d').isin(date_class_one.strftime('%Y-%m-%d')), drop=True)
+        # key word: matching, selecting, match two DataArray by index,
+        # note: works only on day, a day is a class
 
         if significant:
             sig_map = value_significant_of_anomaly_2d_mask(field_3d=class_1)
@@ -822,7 +824,7 @@ def get_data_in_classif(da: xr.DataArray, df: pd.DataFrame, significant: bool = 
         else:
             data_in_class = xr.concat([data_in_class, class_1], dim='class')
 
-        print(f'class = {cls:g}', data_in_class.shape)
+        print(f'class = {cls:g}', data_in_class.shape, data_in_class.dims)
 
     # output:
     if time_mean:
@@ -877,6 +879,8 @@ def plot_cyclone_in_classif(classif: pd.DataFrame,
                             ):
     """
     to plot classification vs cyclone
+
+    note: there is a function to select_near_by_cyclone could be used in this function.
     Args:
         cen_lat ():
         cen_lon ():
@@ -1143,6 +1147,7 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
 
     # class_column_name = classif.columns.to_list()[0]
 
+    # ----------------------------- plotting -----------------------------
     fig, axs = plt.subplots(nrows=n_class, ncols=n_hour, sharex='row', sharey='col',
                             figsize=(19, 10), dpi=300, subplot_kw={'projection': ccrs.PlateCarree()})
     fig.subplots_adjust(left=0.1, right=0.85, bottom=0.02, top=0.9, wspace=0.09, hspace=0.01)
@@ -1151,7 +1156,13 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
         print(f'plot class = {cls + 1:g}')
 
         in_class = data_in_class.where(data_in_class['class'] == class_names[cls], drop=True).squeeze()
+        in_class_dropna = in_class.dropna(dim='time')
+        num_record = in_class_dropna.shape[0]
+
         hourly_mean = in_class.groupby(in_class.time.dt.hour).mean(keep_attrs=True)
+        # here can NOT use in_class_dropna instead of in_class for groupby, if all values are nan,
+        # got a value as Nan, otherwise (using in_class_dropna) the size of input of groupby is zero,
+        # got an error.
 
         for hour in range(n_hour):
 
@@ -1167,8 +1178,13 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
             if cls == 0:
                 ax.set_title(f'{hours[hour]:g}H00')
             if hour == 0:
-                ax.set_ylabel(f'Class_{str(class_names[cls]):s}')
-                plt.ylabel(f'Class_{str(class_names[cls]):s}')
+                plt.ylabel(f'#_{str(class_names[cls]):s} (num = {num_record:g})')
+            # TODO: add this class name/number to y axis
+                ax.text(0.9, 0.95, f'{num_record:g}', fontsize=12,
+                        horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
+
+            ax.set_ylabel(f'#_{str(class_names[cls]):s}', color='b')
+            ax.set_xlabel('xxx')
 
     # ----------------------------- surface wind -----------------------------
     if plot_wind:
@@ -1236,7 +1252,8 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
 
     # ----------------------------- end of plot -----------------------------
 
-    plt.savefig(f'./plot/hourly_mean.{field.name:s}.in_class.{area:s}.'
+    plt.savefig(f'./plot/{title.replace(" ", "_"):s}'
+                f'.hourly_mean.{field.name:s}.in_class.{area:s}.'
                 f'wind_{plot_wind:g}.only_sig_{only_significant_points:g}.'
                 f'test_{plot_big_data_test:g}.png', dpi=300)
     plt.show()
@@ -1277,7 +1294,7 @@ def plot_wind_subplot(area: str,
         if bias == 0:
             n_scale = 12
             key = 2
-            # set the n_scale to define vector length, and key for sample vector in m/s
+            # set the n_scale to define vector length (higher value smaller vector), and key for sample vector in m/s
         else:
             n_scale = 3
             key = 0.5
@@ -3979,7 +3996,7 @@ def read_to_standard_da(file_path: str, var: str):
             max_coords_ndim = max(max_coords_ndim, coords[d].ndim)
 
     # to prepare dims names for data and for coords
-    possible_dims_coords = get_possible_standard_coords_dims(name_for='dims', ndim=max_coords_ndim) # 1d or 2d
+    possible_dims_coords = get_possible_standard_coords_dims(name_for='dims', ndim=max_coords_ndim)  # 1d or 2d
     possible_dims_data_1d = get_possible_standard_coords_dims(name_for='dims', ndim=1)
 
     # get new dim, for data (time, x, y) and for coords lon: [x,y] separately
