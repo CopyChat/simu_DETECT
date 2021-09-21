@@ -3746,28 +3746,23 @@ def convert_cordex_ensemble_2_standard_da(
     """
     to read the original netcdf files, before mergetime, and do processes to save it to single netcdf file
     with the same lon lat, same calender.
-    :param var:
-    :type var:
-    :param domain:
-    :type domain:
-    :param gcm:
-    :type gcm:
-    :param rcm:
-    :type rcm:
-    :param rcp:
-    :type rcp:
-    :param raw_data_dir:
-    :type raw_data_dir:
-    :param output_dir:
-    :type output_dir:
-    :param output_tag:
-    :type output_tag:
-    :param statistic:
-    :type statistic:
-    :param test:
-    :type test:
-    :return:
-    :rtype:
+
+    Parameters
+    ----------
+    var :
+    domain :
+    gcm :
+    rcm :
+    rcp :
+    raw_data_dir :
+    output_dir :
+    output_tag :
+    statistic :
+    test :
+
+    Returns
+    -------
+
     """
 
     # ----------------------------- 1st, merge the data to 1970-2099.nc -----------------------------
