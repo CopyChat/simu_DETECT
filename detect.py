@@ -67,6 +67,7 @@ def simulation(cfg: DictConfig) -> None:
             plt.ylabel(f'{name_wrf[i]:s} ({data.units:s}) @Moufia')
 
         plt.legend()
+        plt.grid()
 
         first_time = str(var.time[0].dt.strftime("%Y-%m-%d %H:%M").values)
         plt.xlabel(f'hours since {first_time:s}')
