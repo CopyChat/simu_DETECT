@@ -39,7 +39,9 @@ def simulation(cfg: DictConfig) -> None:
     if cfg.job.check_var:
 
         name_wrf = ['SWDOWN', 'SWDDNI', 'SWDDIF', 'SWDDIR']
-        name_detect = ['GHI', 'DNI', 'DIF', 'direct_down']     # 'DHI' (diffuse horizontal irradiance), same as DIF
+        # note: SWDDNI is normal SWDDIR is direct horizontal radiation, so SWDDNI * cos(zenith angle) = SWDDIR
+
+        name_detect = ['GHI', 'DNI', 'DIF', 'direct_horizontal']     # 'DHI' (diffuse horizontal irradiance), same as DIF
 
         fig = plt.figure(figsize=(15, 6), dpi=220)
 
@@ -68,6 +70,8 @@ def simulation(cfg: DictConfig) -> None:
 
         first_time = str(var.time[0].dt.strftime("%Y-%m-%d %H:%M").values)
         plt.xlabel(f'hours since {first_time:s}')
+
+        plt.title(f'SWDDNI * cos(zenith angle) = SWDDIR')
 
         plt.savefig('./plot/check_variables_wrf.png', dpi=300)
         plt.show()
