@@ -71,7 +71,7 @@ def simulation(cfg: DictConfig) -> None:
         first_time = str(var.time[0].dt.strftime("%Y-%m-%d %H:%M").values)
         plt.xlabel(f'hours since {first_time:s}')
 
-        plt.title(f'SWDDNI * cos(zenith angle) = SWDDIR')
+        plt.title(f'SWDDNI * cos(zenith angle) = SWDDIR, see solar height plot')
 
         plt.savefig('./plot/check_variables_wrf.png', dpi=300)
         plt.show()
