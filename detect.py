@@ -64,7 +64,7 @@ def simulation(cfg: DictConfig) -> None:
             data = var_denis[:plot_day * 24]
 
             plt.plot(range(plot_day * 24), data.values, label=name_wrf[i])
-            plt.ylabel(f'{name_wrf[i]:s} ({data.units:s})')
+            plt.ylabel(f'{name_wrf[i]:s} ({data.units:s}) @Moufia')
 
         plt.legend()
 
