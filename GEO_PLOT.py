@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 from scipy import stats
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from statsmodels.stats.multitest import fdrcorrection as fdr_cor
 
 
 def my_coding_rules():
@@ -279,8 +280,7 @@ def find_two_bounds(vmin: float, vmax: float, n: int):
     return left, right
 
 
-@hydra.main(config_path="configs", config_name="config.ctang")
-def query_data(cfg: DictConfig, mysql_query: str, remove_missing_data=True):
+def query_data(mysql_query: str, remove_missing_data=True):
     """
     select data from DataBase
     :return: DataFrame
@@ -290,7 +290,7 @@ def query_data(cfg: DictConfig, mysql_query: str, remove_missing_data=True):
     import pymysql
     pymysql.install_as_MySQLdb()
 
-    db_connection_str = cfg.MySQLdb.db_connection_str
+    db_connection_str = 'mysql+pymysql://pepapig:123456@localhost/SWIO'
     db_connection = create_engine(db_connection_str)
 
     df: pd.DataFrame = pd.read_sql(sql=mysql_query, con=db_connection)
@@ -609,9 +609,9 @@ def convert_ttr_era5_2_olr(ttr: xr.DataArray, is_reanalysis: bool):
     if isinstance(ttr, xr.DataArray):
         # change the variable name and units
         olr = xr.DataArray(ttr.values / factor,
-                           coords=[ttr.time, ttr.lat, ttr.lon],
-                           dims=ttr.dims, name='OLR', attrs={'units': 'W m**-2',
-                                                             'long_name': 'OLR'})
+                           coords=ttr.coords,
+                           dims=ttr.dims,
+                           name='OLR', attrs={'units': 'W m**-2', 'long_name': 'OLR'})
 
     return olr
 
@@ -677,6 +677,112 @@ def multi_year_daily_mean(var: xr.DataArray):
     return ydaymean
 
 
+def plot_violinplot_df_1D(df: pd.DataFrame, x: str, y: str, y_unit: str,
+                          x_label: str = 0, y_label: str = 0,
+                          hue: str = 0,
+                          suptitle_add_word: str = '',
+                          ):
+    """
+    plot violin plot
+    Args:
+        y_label ():
+        x_label ():
+        y_unit ():
+        df ():
+        x ():
+        y ():
+        hue ():
+        suptitle_add_word ():
+
+    Returns:
+
+    """
+
+    # definition:
+    if x_label == 0:
+        x_label = x
+    if y_label == 0:
+        y_label = y
+    if y_unit != 0:
+        y_label = f'{y_label:s} ({y_unit:s})'
+
+    from seaborn import violinplot
+
+    fig, ax = plt.subplots(figsize=(11, 6), dpi=220)
+    if hue:
+        ax = violinplot(x=x, y=y, hue=hue, data=df)
+    else:
+        ax = violinplot(x=x, y=y, data=df)
+
+    plt.grid()
+
+    plt.ylabel(f'{y:s} ({y_unit:s})')
+    title = f'{y:s} in {x:s}'
+
+    if suptitle_add_word is not None:
+        title = title + ' ' + suptitle_add_word
+
+    fig.suptitle(title)
+
+    plt.savefig(f'./plot/{title.replace(" ", "_"):s}.'
+                f'.png', dpi=300)
+
+    plt.show()
+
+
+def daily_mean_da(da: xr.DataArray):
+    """
+    calculate daily mean
+    Args:
+        da ():
+
+    Returns:
+        da
+    """
+
+    from datetime import datetime
+
+    da = da.assign_coords(strtime=da.time.dt.strftime('%Y-%m-%d'))
+    # 'strtime' could be any string
+
+    da2 = da.groupby('strtime').mean('time', keep_attrs=True)
+
+    da2 = da2.rename({'strtime': 'time'})
+
+    datetime_obj = [datetime.strptime(a, '%Y-%m-%d') for a in da2.time.values]
+
+    da2 = da2.assign_coords(time=datetime_obj)
+
+    # key word: update coords
+
+    return da2
+
+
+def get_1D_da_in_classif_df(da: xr.DataArray, classif: pd.DataFrame):
+    """
+    merge classif and 1d data, return df
+    Args:
+        da ():
+        classif ():
+
+    Returns:
+        dataframe
+
+    """
+
+    b: xr.DataArray = get_data_in_classif(da=da, df=classif)
+
+    list_class = list(set(classif['class'].to_list())) * b.shape[0]
+
+    c = b.to_dataframe()
+
+    c['class'] = list_class
+
+    c = c.dropna()
+
+    return c
+
+
 def anomaly_daily(da: xr.DataArray) -> xr.DataArray:
     """
     calculate daily anomaly, as the name, from the xr.DataArray
@@ -702,6 +808,7 @@ def anomaly_hourly(da: xr.DataArray, percent: int = 0) -> xr.DataArray:
     :param da:
     :param percent: output in percentage
     :return: da with a coordinate named 'strftime' but do not have this dim
+    dfd
     """
 
     if len(set(da.time.dt.year.values)) < 30:
@@ -709,7 +816,6 @@ def anomaly_hourly(da: xr.DataArray, percent: int = 0) -> xr.DataArray:
                       'for more see project Mialhe_2020/src/anomaly.py')
 
     print(f'calculating hourly anomaly ... {da.name:s}')
-    # todo: print out the var name
 
     climatology = da.groupby(da.time.dt.strftime('%m-%d-%H')).mean('time')
     anomaly = da.groupby(da.time.dt.strftime('%m-%d-%H')) - climatology
@@ -739,7 +845,7 @@ def remove_duplicate_list(mylist: list) -> list:
 def plot_geo_subplot_map(geomap, vmin, vmax, bias, ax,
                          domain: str, tag: str,
                          plot_cbar: bool = True,
-                         type: str = 'controuf',
+                         type: str = 'contourf',
                          statistics: bool = 1):
     """
     plot subplot
@@ -769,7 +875,7 @@ def plot_geo_subplot_map(geomap, vmin, vmax, bias, ax,
     # vmin = geomap.min()
     cmap, norm = set_cbar(vmax=vmax, vmin=vmin, n_cbar=20, bias=bias)
 
-    cf = 1
+    cf = 'wrong type'
 
     if type == 'pcolormesh':
         cf = plt.pcolormesh(geomap.lon, geomap.lat, geomap,
@@ -823,7 +929,7 @@ def get_data_in_classif(da: xr.DataArray, df: pd.DataFrame, significant: bool = 
         class_1: xr.DataArray = \
             da.where(da.time.dt.strftime('%Y-%m-%d').isin(date_class_one.strftime('%Y-%m-%d')), drop=True)
         # key word: matching, selecting, match two DataArray by index,
-        # note: works only on day, a day is a class
+        # note: works only on day, a day is a class, since the format is up to day
 
         if significant:
             sig_map = value_significant_of_anomaly_2d_mask(field_3d=class_1)
@@ -1116,7 +1222,7 @@ def plot_diurnal_boxplot_in_classif(classif: pd.DataFrame, field_1D: xr.DataArra
     print(f'got plot ')
 
 
-def test_exact_mc_permutation(small, big, nmc, show:bool = True):
+def test_exact_mc_permutation(small, big, nmc, show: bool = True):
     """
     to test if two samples are same
     Args:
@@ -1275,6 +1381,7 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
     # ----------------------------- data -----------------------------
     data_in_class = get_data_in_classif(da=field, df=classif, time_mean=False,
                                         significant=0)
+    # when the data freq is not the freq as cla
     print(f'good')
     # ----------------------------- get definitions -----------------------------
     class_names = list(set(classif.values.ravel()))
@@ -1328,8 +1435,8 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
             if hour == 0:
                 plt.ylabel(f'#_{str(class_names[cls]):s} (num = {num_record:g})')
                 # TODO: add this class name/number to y axis
-                ax.text(0.9, 0.95, f'{num_record:g}', fontsize=12,
-                        horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
+                # ax.text(0.9, 0.95, f'num={num_record:g}', fontsize=12,
+                #         horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
 
             ax.set_ylabel(f'#_{str(class_names[cls]):s}', color='b')
             ax.set_xlabel('xxx')
@@ -1338,19 +1445,16 @@ def plot_diurnal_cycle_field_in_classif(classif: pd.DataFrame, field: xr.DataArr
     if plot_wind:
         print(f'plot surface wind ...')
 
-        print(f'loading data ... ')
+        print(f'loading wind data ... ')
         warnings.warn('CTANG: load data from 1999-2016, make sure that the data period is correct,'
                       ' check and check it again')
 
-        local_data = '/Users/ctang/local_data/era5/Mialhe_2020'
-        # u = read_to_standard_da(f'{local_data:s}/'
-        #                         f'u10.hourly.era5_land.1981-2018.{area:s}.NDJF.local_day_time.nc', 'u10')
-        # v = read_to_standard_da(f'{local_data:s}/'
-        #                         f'v10.hourly.era5_land.1981-2018.{area:s}.NDJF.local_day_time.nc', 'v10')
-        u = read_to_standard_da(f'{local_data:s}/'
-                                f'u10.hourly.era5.1979-2018.{area:s}.NDJF.local_day_time.nc', 'u10')
-        v = read_to_standard_da(f'{local_data:s}/'
-                                f'v10.hourly.era5.1979-2018.{area:s}.NDJF.local_day_time.nc', 'v10')
+        local_data = '/Users/ctang/local_data/era5'
+        u_file = f'{local_data:s}/u10/u10.hourly.era5.1999-2016.{area:s}.local_daytime.nc'
+        v_file = f'{local_data:s}/v10/v10.hourly.era5.1999-2016.{area:s}.local_daytime.nc'
+
+        u = read_to_standard_da(u_file, 'u10')
+        v = read_to_standard_da(v_file, 'v10')
         # classif OLR is from 1979 to 2018.
 
         if plot_big_data_test:
@@ -1440,8 +1544,8 @@ def plot_wind_subplot(area: str,
         headwidth = 8
 
         if bias == 0:
-            n_scale = 30
-            key = 10
+            n_scale = 20
+            key = 5
             # set the n_scale to define vector length (higher value smaller vector), and key for sample vector in m/s
         else:
             n_scale = 3
@@ -2068,7 +2172,7 @@ def plot_mjo_phase(mjo_phase: pd.DataFrame, olr: xr.DataArray, high_amplitude: b
     :param month:
     :param mjo_phase:
     :param high_amplitude: if plot high amplitude > 1
-    :param olr:
+    :param olr: has to input olr, anomaly and mean both needed.
     :return:
     """
     # ----------------------------- prepare the data -----------------------------
@@ -2080,7 +2184,7 @@ def plot_mjo_phase(mjo_phase: pd.DataFrame, olr: xr.DataArray, high_amplitude: b
     olr = filter_xr_by_month(data=olr, month=month)
     olr_daily_anomaly = anomaly_daily(olr)
 
-    olr_daily_anomaly.to_netcdf(f'./mjo.anomaly.test.nc')
+    # olr_daily_anomaly.to_netcdf(f'./mjo.anomaly.test.nc')
 
     mjo_phase = filter_df_by_month(data=mjo_phase, month=month)
 
@@ -2111,7 +2215,11 @@ def plot_mjo_phase(mjo_phase: pd.DataFrame, olr: xr.DataArray, high_amplitude: b
         olr_mean = olr_1phase.mean(axis=0)
 
         if only_significant_points:
-            sig_map: xr.DataArray = value_mjo_significant_map(phase=phase, grid=anomaly_mean, month=month)
+            # sig_map: xr.DataArray = value_mjo_significant_map(phase=phase, grid=anomaly_mean, month=month)
+            # above is the old function, I can not remember why
+            sig_map: xr.DataArray = value_significant_of_anomaly_2d_mask(
+                field_3d=anomaly_olr_1phase, conf_level=0.05, show=0)
+
             # olr_mean = filter_2d_by_mask(olr_mean, mask=sig_map)
             anomaly_mean = filter_2d_by_mask(anomaly_mean, mask=sig_map)
             # to fix type
@@ -2123,7 +2231,7 @@ def plot_mjo_phase(mjo_phase: pd.DataFrame, olr: xr.DataArray, high_amplitude: b
         # ----------------------------- start to plot -----------------------------
         plt.title('#' + str(phase) + '/' + str(8), pad=3)
 
-        lon, lat = np.meshgrid(anomaly_mean.longitude, anomaly_mean.latitude)
+        lon, lat = np.meshgrid(anomaly_mean.lon, anomaly_mean.lat)
         level_anomaly = np.arange(-50, 51, 5)
         cf1 = plt.contourf(lon, lat, anomaly_mean, level_anomaly, cmap='PuOr_r', vmax=50, vmin=-50)
         level_olr = np.arange(140, 280, 20)
@@ -2152,7 +2260,7 @@ def plot_mjo_phase(mjo_phase: pd.DataFrame, olr: xr.DataArray, high_amplitude: b
     # cb_ax = fig.add_axes([0.13, 0.1, 0.7, 0.015])
     # cb = plt.colorbar(cf1, orientation='horizontal', shrink=0.7, pad=0.05, label=cbar_label, cax=cb_ax)
 
-    plt.savefig(f'./mjo_phases_sig_{only_significant_points:g}.png', dpi=220)
+    plt.savefig(f'./plot/mjo_phases_sig_{only_significant_points:g}.png', dpi=220)
 
     plt.show()
     print(f'got plot')
@@ -2379,7 +2487,7 @@ def value_mjo_significant_map(phase: int, grid: xr.DataArray = 0, month: str = 0
 
     # ----------------------------- read necessary data: era5 ttr reanalysis data
     # ttr_swio = xr.open_dataset(f'~/local_data/era5/ttr.era5.1999-2016.day.swio.nc')['ttr']
-    ttr_swio = xr.open_dataset(f'~/local_data/era5/ttr.era5.1999-2016.day.reu.nc')['ttr']
+    ttr_swio = read_to_standard_da(f'./local_data/era5/ttr.era5.1999-2016.day.swio.nc', var='ttr')
 
     if isinstance(month, str):
         ttr_swio = filter_xr_by_month(ttr_swio, month=month)
@@ -2398,38 +2506,40 @@ def value_mjo_significant_map(phase: int, grid: xr.DataArray = 0, month: str = 0
     sig_map_olr: xr.DataArray = value_significant_of_anomaly_2d_mask(field_3d=olr_swio_anomaly_1phase, conf_level=0.05)
 
     # to see if remap is necessary:
-    if isinstance(grid, int):
-        new_sig_map = sig_map_olr
+    if grid == 0:
+        sig = sig_map_olr.copy()
+        # no remap
 
     else:
 
         new_sig_map = np.zeros(grid.shape)
-        old_lon = olr_swio.longitude
-        old_lat = olr_swio.latitude
+        old_lon = olr_swio.lon
+        old_lat = olr_swio.lat
 
-        new_lon = grid.longitude.values
-        new_lat = grid.latitude.values
+        new_lon = grid.lon.values
+        new_lat = grid.lat.values
 
         # get closest lon:
-        for lon in range(grid.longitude.size):
+        for lon in range(grid.lon.size):
             new_lon[lon] = old_lon[np.abs(old_lon - new_lon[lon]).argmin()]
         # get closest lat:
-        for lat in range(grid.latitude.size):
+        for lat in range(grid.lat.size):
             new_lat[lat] = old_lat[np.abs(old_lat - new_lat[lat]).argmin()]
 
-        for lat in range(grid.latitude.size):
-            for lon in range(grid.longitude.size):
-                new_sig_map[lat, lon] = sig_map_olr.loc[dict(latitude=new_lat[lat], longitude=new_lon[lon])].values
+        for lat in range(grid.lat.size):
+            for lon in range(grid.lon.size):
+                new_sig_map[lat, lon] = sig_map_olr.where((sig_map_olr.lat == new_lat[lat]) &
+                                                          (sig_map_olr.lon == new_lon[lon]), drop=True).values
 
-    # return sig map in 2D xr.DataArray:
-    sig = xr.DataArray(new_sig_map.astype(bool), coords=[grid.latitude, grid.longitude], dims=grid.dims)
+        sig = xr.DataArray(new_sig_map.astype(bool), coords=[grid.lat, grid.lon], dims=grid.dims)
 
     return sig
 
 
 def value_significant_of_anomaly_2d_mask(field_3d: xr.DataArray, conf_level: float = 0.05,
                                          show: bool = True,
-                                         check_every_grid: bool = False) -> xr.DataArray:
+                                         fdr_correction: bool = True,
+                                         check_nan_every_grid: bool = False) -> xr.DataArray:
     """
     calculate 2d map of significant of values in true false
     :param conf_level: default = 0.05
@@ -2437,20 +2547,25 @@ def value_significant_of_anomaly_2d_mask(field_3d: xr.DataArray, conf_level: flo
     :return: 2d array of true false xr.DataArray
 
     Args:
-        check_every_grid (): to check all the pixel, since they could have nan at different times
+        fdr_correction (): if do a false discoveries rate correction
+        check_nan_every_grid (): to check all the pixel, since they could have nan at different times
         show ():
     """
 
-    # there's another coord beside 'longitude' 'latitude', which is the dim of significant !!!
-    sig_coord_name = [x for x in field_3d.dims if x not in ['lon', 'lat']][0]
+    # change the order of dims
+    transpose_dims = ['y', 'x']
+
+    # there's another coord beside 'y' and 'x', which is the dim of significant !!!
+    sig_coord_name = [x for x in field_3d.dims if x not in transpose_dims][0]
 
     # tag, note: change order of dim:
-    field_3d = field_3d.transpose(sig_coord_name, "lat", "lon")
+    new_dims = [sig_coord_name] + transpose_dims
+    field_3d = field_3d.transpose(*new_dims)
 
     p_map = np.zeros((field_3d.shape[1], field_3d.shape[2]))
 
     print(f'to get significant map...')
-    if check_every_grid:
+    if check_nan_every_grid:
         for lat in range(field_3d.shape[1]):
             print(f'significant ----- {lat * 100 / len(field_3d.lat): 4.2f} % ...')
             for lon in range(field_3d.shape[2]):
@@ -2465,6 +2580,7 @@ def value_significant_of_anomaly_2d_mask(field_3d: xr.DataArray, conf_level: flo
                     print("----------------- bad point")
                     p_map[lat, lon] = 0
                 else:
+                    # t-test
                     t_statistic, p_value_2side = stats.ttest_1samp(grid_nonnan, 0)
                     p_map[lat, lon] = p_value_2side
 
@@ -2472,9 +2588,27 @@ def value_significant_of_anomaly_2d_mask(field_3d: xr.DataArray, conf_level: flo
     else:
         # check if the operation of dropna reduce seriously the size of data
         field = field_3d.dropna(sig_coord_name)
-        if len(field) / len(field_3d) < 0.95:
-            sys.exit('too much nan in data check significant function')
+        if len(field) / len(field_3d) < 0.98:
+            sys.exit('too much nan, > 2% in data check significant function')
         t_map, p_map = stats.ttest_1samp(field, 0)
+
+    if fdr_correction:
+        rejected, pvalue_corrected = \
+            fdr_cor(p_map.ravel(), alpha=conf_level, method='indep', is_sorted=False)
+
+        # method{‘i’, ‘indep’, ‘p’, ‘poscorr’, ‘n’, ‘negcorr’}, optional
+        # Which method to use for FDR correction.
+        # {'i', 'indep', 'p', 'poscorr'} all refer to fdr_bh (Benjamini/Hochberg
+        # for independent or positively correlated tests).
+        # {'n', 'negcorr'} both refer to fdr_by (Benjamini/Yekutieli for
+        # general or negatively correlated tests). Defaults to 'indep'.
+
+        rejected = rejected.reshape(p_map.shape)
+        pvalue_corrected = pvalue_corrected.reshape(p_map.shape)
+        print(f'correction of FDR is made')
+
+        # update p_map with fdr corrections
+        p_map = pvalue_corrected
 
     # option 2:
     # 根据定义，p值大小指原假设H0为真的情况下样本数据出现的概率。
@@ -2484,7 +2618,7 @@ def value_significant_of_anomaly_2d_mask(field_3d: xr.DataArray, conf_level: flo
 
     # return sig map in 2D xr.DataArray:
     sig_map_da = field_3d.mean(sig_coord_name)
-    sig = xr.DataArray(sig_map.astype(bool), coords=[field_3d.lat, field_3d.lon], dims=sig_map_da.dims)
+    sig = xr.DataArray(sig_map.astype(bool), coords=sig_map_da.coords, dims=sig_map_da.dims)
 
     if show:
         plt.close("all")
@@ -2824,8 +2958,8 @@ def filter_2d_by_mask(data: xr.DataArray, mask: xr.DataArray):
 
     if isinstance(data, xr.DataArray):
         # build up a xr.DataArray as mask, only type of DataArray works.
-        lookup = xr.DataArray(mask, dims=('lat', 'lon'))
-        # use the standard dim names 'time', 'lat', 'lon'
+        lookup = xr.DataArray(mask, dims=('y', 'x'))
+        # use the standard dim names 'time', 'y', 'x'
 
         # lookup = xr.DataArray(mask, dims=data.dims) # possible works for 3D mask
 
@@ -4128,6 +4262,8 @@ def read_to_standard_da(file_path: str, var: str):
                this function will be crash.
     note: order/name of output da are defined in function get_possible_standard_coords_dims
 
+    attention: standard dim is 'time', 'y', 'x'. if da has no coords that's the default dims names
+
     Parameters
     ----------
     file_path :
@@ -4579,14 +4715,17 @@ def convert_da_shifttime(da: xr.DataArray, second: int):
     time_shifted = da.time.get_index('time') + timedelta(seconds=second)
 
     new_coords = dict(time=time_shifted)
-    possible_coords = ['lev', 'lat', 'lon']  # do not change the order
-    for d in possible_coords:
-        if d in coords:
-            # my_dict['name'] = 'Nick'
-            new_coords[d] = coords[d]
+    # possible_coords = ['lev', 'lat', 'lon']  # do not change the order
+    # for i in range(len(possible_coords)):
+    #     c = possible_coords[i]
+    #     if c in coords:
+    #         # my_dict['name'] = 'Nick'
+    #         new_coords[c] = coords[c]
 
-    new_da = xr.DataArray(da.values, dims=tuple(new_coords.keys()),
-                          coords=new_coords, name=da.name, attrs=da.attrs)
+    # do not change the input dims and coords:
+    new_da = xr.DataArray(da.values, dims=da.dims, name=da.name, attrs=da.attrs)
+    new_da = new_da.assign_coords(time=("time", time_shifted),
+                                  lat=("y", da.lat.data), lon=("x", da.lon.data))
 
     return new_da
 
@@ -5331,4 +5470,4 @@ def plot_cordex_ensemble_changes_map(past: xr.DataArray, mid: xr.DataArray, end:
     plt.savefig(f'./plot/{big_title.replace(" ", "_"):s}.png', dpi=200)
     plt.show()
     print(f'done')
-# change from update
+# change from Mialhe
