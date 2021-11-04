@@ -18,7 +18,7 @@ job:
   wps:
     loading_domain: 0
     plot_domain: 0
-  chech_var: 1
+  check_var: 1
 
 output:
   plot_domain: 'domain_setting_simu_detect.png'
